@@ -36,6 +36,9 @@ fun LoginScreen(
     var selectedRole by remember { mutableStateOf("Student") } // "Student" or "Landlord"
     var authMode by remember { mutableStateOf("Sign In") } // "Sign In" or "Register"
 
+    // Error Validation state
+    var authErrorMessage by remember { mutableStateOf<String?>(null) }
+
     // Sign in state
     var email by remember { mutableStateOf("alex@campus.edu") }
     var password by remember { mutableStateOf("••••••••••") }
@@ -123,16 +126,42 @@ fun LoginScreen(
                         text = "Sign In",
                         selected = authMode == "Sign In",
                         modifier = Modifier.weight(1f)
-                    ) { authMode = "Sign In" }
+                    ) {
+                        authMode = "Sign In"
+                        authErrorMessage = null
+                    }
 
                     ActionTabButton(
                         text = "Register",
                         selected = authMode == "Register",
                         modifier = Modifier.weight(1f)
-                    ) { authMode = "Register" }
+                    ) {
+                        authMode = "Register"
+                        authErrorMessage = null
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // Validation Banner
+                authErrorMessage?.let { err ->
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFFFEE2E2)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = Color(0xFFDC2626), modifier = Modifier.size(16.dp))
+                            Text(text = err, fontSize = 12.sp, color = Color(0xFFDC2626), fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
 
                 if (authMode == "Sign In") {
                     // --- SIGN IN FORM ---
@@ -147,7 +176,10 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(6.dp))
                         OutlinedTextField(
                             value = email,
-                            onValueChange = { email = it },
+                            onValueChange = {
+                                email = it
+                                authErrorMessage = null
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             leadingIcon = {
@@ -195,7 +227,10 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(6.dp))
                         OutlinedTextField(
                             value = password,
-                            onValueChange = { password = it },
+                            onValueChange = {
+                                password = it
+                                authErrorMessage = null
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             leadingIcon = {
@@ -254,14 +289,14 @@ fun LoginScreen(
 
                         Box(
                             modifier = Modifier
-                                .background(Color(0xFFD1FAE5), RoundedCornerShape(16.dp)) // 10% Accent Light
+                                .background(Color(0xFFD1FAE5), RoundedCornerShape(16.dp))
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
                                 text = "Fast Access",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF059669) // 10% Accent Green Dark
+                                color = Color(0xFF059669)
                             )
                         }
                     }
@@ -312,6 +347,13 @@ fun LoginScreen(
                                             ?: "Login failed. Please try again."
                                     }
                                 }
+                            if (email.isBlank() || !email.contains("@")) {
+                                authErrorMessage = "Please enter a valid campus email address"
+                            } else if (password.length < 4) {
+                                authErrorMessage = "Password must be at least 4 characters"
+                            } else {
+                                authErrorMessage = null
+                                onLoginSuccess(selectedRole)
                             }
                         },
                         modifier = Modifier
@@ -359,9 +401,9 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // University SSO Portal Button
+                    // Authenticate with Google Button
                     OutlinedButton(
-                        onClick = { },
+                        onClick = { onLoginSuccess(selectedRole) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(46.dp),
@@ -374,14 +416,14 @@ fun LoginScreen(
                             horizontalArrangement = Arrangement.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Outlined.Shield,
+                                imageVector = Icons.Outlined.GMobiledata,
                                 contentDescription = null,
                                 tint = Color(0xFF2563EB),
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(22.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "University SSO Portal",
+                                text = "Authenticate with Google",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFF111827)
@@ -402,7 +444,10 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         OutlinedTextField(
                             value = regFullName,
-                            onValueChange = { regFullName = it },
+                            onValueChange = {
+                                regFullName = it
+                                authErrorMessage = null
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             placeholder = { Text(if (selectedRole == "Student") "e.g. Chrispin Banda" else "e.g. Mr. J. Banda") },
@@ -447,34 +492,6 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Program or Room count
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text(
-                            text = if (selectedRole == "Student") "Degree Program & Level" else "Number of Managed Rooms",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF111827)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        OutlinedTextField(
-                            value = regProgramOrRooms,
-                            onValueChange = { regProgramOrRooms = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            placeholder = { Text(if (selectedRole == "Student") "e.g. BSc Computer Science • Level 3" else "e.g. 10 Rooms / 25 Beds") },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedContainerColor = Color(0xFFF9FAFB),
-                                focusedContainerColor = Color(0xFFF9FAFB),
-                                unfocusedBorderColor = Color(0xFFE5E7EB),
-                                focusedBorderColor = Color(0xFF2563EB)
-                            ),
-                            singleLine = true,
-                            textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
                     // Email Address
                     Column(modifier = Modifier.fillMaxWidth()) {
                         Text(
@@ -486,7 +503,10 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         OutlinedTextField(
                             value = regEmail,
-                            onValueChange = { regEmail = it },
+                            onValueChange = {
+                                regEmail = it
+                                authErrorMessage = null
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             placeholder = { Text("e.g. name@campus.edu") },
@@ -514,7 +534,10 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                         OutlinedTextField(
                             value = regPassword,
-                            onValueChange = { regPassword = it },
+                            onValueChange = {
+                                regPassword = it
+                                authErrorMessage = null
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             visualTransformation = PasswordVisualTransformation(),
@@ -603,6 +626,13 @@ fun LoginScreen(
                                             ?: "Registration failed. Please try again."
                                     }
                                 }
+                            if (regFullName.isBlank() || regEmail.isBlank() || !regEmail.contains("@")) {
+                                authErrorMessage = "Please enter full name and a valid campus email"
+                            } else if (regPassword.length < 4) {
+                                authErrorMessage = "Password must be at least 4 characters"
+                            } else {
+                                authErrorMessage = null
+                                onLoginSuccess(selectedRole)
                             }
                         },
                         modifier = Modifier
@@ -644,7 +674,10 @@ fun LoginScreen(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF2563EB),
-                            modifier = Modifier.clickable { authMode = "Register" }
+                            modifier = Modifier.clickable {
+                                authMode = "Register"
+                                authErrorMessage = null
+                            }
                         )
                     }
                 } else {
@@ -662,7 +695,10 @@ fun LoginScreen(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF2563EB),
-                            modifier = Modifier.clickable { authMode = "Sign In" }
+                            modifier = Modifier.clickable {
+                                authMode = "Sign In"
+                                authErrorMessage = null
+                            }
                         )
                     }
                 }

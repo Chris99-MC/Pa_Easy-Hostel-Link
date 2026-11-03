@@ -42,12 +42,15 @@ fun StudentHomeScreen(
     var contactPhone by remember { mutableStateOf("+265 99 123 4567") }
     val selectedPeriod by remember { mutableStateOf("Semester 1 (Sept 2024 - Jan 2025)") }
     var expandedPeriodDropdown by remember { mutableStateOf(false) }
+    var showDetailsDialog by remember { mutableStateOf(false) }
+    var selectedHostelDetails by remember { mutableStateOf("Sunrise Residence") }
 
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    Scaffold(
-        topBar = {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -810,7 +813,10 @@ fun StudentHomeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 OutlinedButton(
-                                    onClick = { },
+                                    onClick = { 
+                                        showDetailsDialog = true
+                                        selectedHostelDetails = "Sunrise Residence"
+                                    },
                                     modifier = Modifier
                                         .height(44.dp)
                                         .weight(0.4f),
@@ -1018,7 +1024,10 @@ fun StudentHomeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 OutlinedButton(
-                                    onClick = { },
+                                    onClick = { 
+                                        showDetailsDialog = true
+                                        selectedHostelDetails = "Sunrise Residence"
+                                    },
                                     modifier = Modifier
                                         .height(44.dp)
                                         .weight(0.4f),
@@ -1390,6 +1399,28 @@ if (showBottomSheet) {
             }
         }
     }
+
+    // Hostel Details Dialog UI
+    if (showDetailsDialog) {
+        AlertDialog(
+            onDismissRequest = { showDetailsDialog = false },
+            title = { Text("$selectedHostelDetails - Details & Amenities") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Location: Near University Main Gate (5 mins walk)")
+                    Text("Room Types Available: Shared Double, Deluxe Single, Self-contained")
+                    Text("Amenities: High-speed Wi-Fi, 24/7 Security Guard, Backup Generator, Continuous Water Supply")
+                    Text("Status: Active Admission Open for Semester 1")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showDetailsDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+  }
 }
 
 @Composable

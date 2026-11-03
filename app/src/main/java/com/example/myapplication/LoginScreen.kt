@@ -1,5 +1,5 @@
  package com.example.myapplication
-
+ import com.example.myapplication.data.repository.AuthRepository
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,8 +25,14 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun LoginScreen(
+
     onLoginSuccess: (String) -> Unit = {}
 ) {
+    val authRepository = remember { AuthRepository() }
+
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var successMessage by remember { mutableStateOf<String?>(null) }
     var selectedRole by remember { mutableStateOf("Student") } // "Student" or "Landlord"
     var authMode by remember { mutableStateOf("Sign In") } // "Sign In" or "Register"
 
@@ -261,10 +267,53 @@ fun LoginScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
+                    errorMessage?.let { message ->
+                        Text(
+                            text = message,
+                            color = Color.Red,
+                            fontSize = 12.sp
+                        )
+                    }
 
+                    successMessage?.let { message ->
+                        Text(
+                            text = message,
+                            color = Color(0xFF059669),
+                            fontSize = 12.sp
+                        )
+                    }
                     // Login Button (60% Primary Blue)
                     Button(
-                        onClick = { onLoginSuccess(selectedRole) },
+                        onClick = {
+                            if (email.isBlank() || password.isBlank()) {
+                                errorMessage = "Please enter your email and password."
+                            } else {
+                                isLoading = true
+                                errorMessage = null
+
+                                authRepository.loginUser(
+                                    email = email.trim(),
+                                    password = password
+                                ) { result ->
+
+                                    isLoading = false
+
+                                    result.onSuccess { user ->
+
+                                        if (user.role != selectedRole.lowercase()) {
+                                            authRepository.logoutUser()
+                                            errorMessage = "You selected the wrong account type."
+                                        } else {
+                                            onLoginSuccess(user.role)
+                                        }
+
+                                    }.onFailure { exception ->
+                                        errorMessage = exception.message
+                                            ?: "Login failed. Please try again."
+                                    }
+                                }
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -482,9 +531,80 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    errorMessage?.let { message ->
+                        Text(
+                            text = message,
+                            color = Color.Red,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    successMessage?.let { message ->
+                        Text(
+                            text = message,
+                            color = Color(0xFF059669),
+                            fontSize = 12.sp
+                        )
+                    }
                     // Register Button (10% Accent Green)
                     Button(
-                        onClick = { onLoginSuccess(selectedRole) },
+                        onClick = {
+
+                            if (
+                                regFullName.isBlank() ||
+                                regEmail.isBlank() ||
+                                regPassword.isBlank() ||
+                                regIdOrProperty.isBlank() ||
+                                regProgramOrRooms.isBlank()
+                            ) {
+                                errorMessage = "Please complete all required fields."
+                            } else if (regPassword.length < 6) {
+                                errorMessage = "Password must contain at least 6 characters."
+                            } else {
+
+                                isLoading = true
+                                errorMessage = null
+
+                                authRepository.registerUser(
+                                    fullName = regFullName.trim(),
+                                    email = regEmail.trim(),
+                                    password = regPassword,
+                                    role = selectedRole.lowercase(),
+
+                                    studentId = if (selectedRole == "Student")
+                                        regIdOrProperty.trim() else "",
+
+                                    program = if (selectedRole == "Student")
+                                        regProgramOrRooms.trim() else "",
+
+                                    propertyName = if (selectedRole == "Landlord")
+                                        regIdOrProperty.trim() else "",
+
+                                    managedRooms = if (selectedRole == "Landlord")
+                                        regProgramOrRooms.trim() else ""
+
+                                ) { result ->
+
+                                    isLoading = false
+
+                                    result.onSuccess { user ->
+
+                                        if (user.role == "student") {
+                                            successMessage = "Registration successful!"
+                                            onLoginSuccess(user.role)
+                                        } else {
+                                            successMessage =
+                                                "Registration successful. Awaiting landlord approval."
+                                            authRepository.logoutUser()
+                                        }
+
+                                    }.onFailure { exception ->
+                                        errorMessage = exception.message
+                                            ?: "Registration failed. Please try again."
+                                    }
+                                }
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),

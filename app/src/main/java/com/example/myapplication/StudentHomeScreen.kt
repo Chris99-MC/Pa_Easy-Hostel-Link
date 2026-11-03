@@ -45,6 +45,11 @@ fun StudentHomeScreen(
 
     var isSubmitting by remember { mutableStateOf(false) }
     var submitSuccess by remember { mutableStateOf(false) }
+    var contactPhone by remember { mutableStateOf("+265 99 123 4567") }
+    val selectedPeriod by remember { mutableStateOf("Semester 1 (Sept 2024 - Jan 2025)") }
+    var expandedPeriodDropdown by remember { mutableStateOf(false) }
+    var showDetailsDialog by remember { mutableStateOf(false) }
+    var selectedHostelDetails by remember { mutableStateOf("Sunrise Residence") }
     var applicationError by remember { mutableStateOf<String?>(null) }
 
     // Application Form Input State
@@ -57,6 +62,9 @@ fun StudentHomeScreen(
     val coroutineScope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
     val allHostels = AppDataRepository.hostels
     val userApplications = AppDataRepository.applications
 
@@ -633,6 +641,54 @@ fun StudentHomeScreen(
                                             )
                                         }
 
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { 
+                                        showDetailsDialog = true
+                                        selectedHostelDetails = "Sunrise Residence"
+                                    },
+                                    modifier = Modifier
+                                        .height(44.dp)
+                                        .weight(0.4f),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFFDBEAFE)),
+                                    border = null
+                                ) {
+                                    Text(
+                                        text = "Details",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0F172A) // Dark Blue text on light shape
+                                    )
+                                }
+
+                                Button(
+                                    onClick = { showBottomSheet = true },
+                                    modifier = Modifier
+                                        .height(44.dp)
+                                        .weight(0.6f),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)) // Dark Blue shape
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.FlashOn,
+                                            contentDescription = null,
+                                            tint = Color.White, // White icon on dark shape
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Text(
+                                            text = "Apply for Sunrise",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White // White text on dark shape
+                                        )
                                         Button(
                                             onClick = {
                                                 if (!isFull) {
@@ -722,6 +778,29 @@ fun StudentHomeScreen(
                         }
                     }
 
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                OutlinedButton(
+                                    onClick = { 
+                                        showDetailsDialog = true
+                                        selectedHostelDetails = "Sunrise Residence"
+                                    },
+                                    modifier = Modifier
+                                        .height(44.dp)
+                                        .weight(0.4f),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Color(0xFFDBEAFE)),
+                                    border = null
+                                ) {
+                                    Text(
+                                        text = "Details",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF0F172A) // Dark Blue text on light shape
+                                    )
+                                }
                     Text(text = "Landlord Contact: ${hostel.contactPhone}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2563EB))
 
                     Button(
@@ -970,6 +1049,28 @@ fun StudentSavedHostelsContent(
             }
         }
     }
+
+    // Hostel Details Dialog UI
+    if (showDetailsDialog) {
+        AlertDialog(
+            onDismissRequest = { showDetailsDialog = false },
+            title = { Text("$selectedHostelDetails - Details & Amenities") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Location: Near University Main Gate (5 mins walk)")
+                    Text("Room Types Available: Shared Double, Deluxe Single, Self-contained")
+                    Text("Amenities: High-speed Wi-Fi, 24/7 Security Guard, Backup Generator, Continuous Water Supply")
+                    Text("Status: Active Admission Open for Semester 1")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showDetailsDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+  }
 }
 
 @Composable
